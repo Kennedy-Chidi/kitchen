@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "single-cirrus-390717",
+  "private_key_id": "a26b4f4658b583387f624f0009a0e6958e397a35",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEuwIBADANBgkqhkiG9w0BAQEFAASCBKUwggShAgEAAoIBAQCjMssoOEdmabRW\nj0dqyfT4vsRTK9IEEYh38979LkKbzVWJ7zuG9fcwvl9QarbbKZ5aqH5Tx2YLxKBq\nKOnFbYQQdV8GdG6d1wx3LVMC/dYBoyXC5BTfP5G1mxifzpZQ/mWEjW+uw9h/vcrL\nsOx1pi4k1PapgxPX95jU21En3lfl1bbFCsOTaVGAvtkTHYh8ZKksqeUGTYb7C5uG\n6PsMkEaRa6rGhaTebuXpgBC06bjnvUEj4wvieV+h1KTJ8UFb2S8Iasmr1DaPKu53\nVnvh/5RmO8TSWXS8BSPHJARoDY44KWP6TfT/SBnQSWAooEhVn0wuMwgJIKRvoYzz\n8vCtI2xhAgMBAAECgf8EcKvt3Kzyv6jI4SsvyU/Msti2c/4Nm3XsdveG36j6oG3k\nxD355gkm9SylhN/fFau7oVrhWOGYszFKG4iAs01hPbmrbSvEVyFBGvCzAci+buUx\n/0sT9uv51lV6Wi172IaiFRNEVQsKpyg0Y3XHu8W5Y0iBy6+js+HFEjRe0NilQCCQ\nW83dQdp1UWgKZ6Avw5jR3AD/Z0S26C0AqFfgMGfEPgvYeCSLigI+eeKkKAnYOcHD\nPOO9g9dDgQQeXMk6uTvIZ20xrtqSyuOHpeSb45hRCBgNAkmghVYS7nWj3wbJzHuY\nn1tHZ94PPXvDVHg1Xy0pjiAg5LjwHDAod+7ZCYECgYEA5CU/jJTzB/o7xIDQKdP8\nvfRk+428qudshfeT5HqZ19jCJiiEZJEpYYCnqGSH8apC4NBtlyoa4O8NePlZLh+K\n0R+yEl/EijvEFI5WUwbaqmKw98MMT8rekgszXBX0q5455JNkDriGhZzADZSW37Ho\nNj0ptqtOVHKzS1AMwF8WU+ECgYEAtx+bGBmYg/O/qLuQbTRCvgv/c443OBctA/Dw\nI3dNU4BbiVtsF9fIXoEMaA38uCKtta94xzVa51BdWkDBalQSpunQkriHQiYpEX0q\nuMghIoI7uxkq8zeQ6gB5hxUXsUvVuXMfy8QtGW42u8s0Aa2IX3s0p6bFE8Uyl7lN\ny37IKIECgYA2AN8nDsbsV344SGl9zTEhYa1ZojZLmhYlK/J0/dRWtHdYgvS7vWS3\nMLX+9TT8rlnAT3Xxd0T/g3aD8Tn74fmBAOis0sB6HCWQ3BRw+Mlf1ZagPyo15QaE\nOWSB4qyUxxJbGcxwc5tcGzuWu1pvPvSBij7Kf4g+Exx/skYibx+g4QKBgAdD0btb\nCJnziZ8AEfLDKAKyJyhGdBpdkQOfA2fky8SMSxVf8yHfBav6IqveIjCL76hNldUR\nYNHcdlemSgYV38ePbx7jAzq0mNyAwrkh926PDB+YGAQeKDmgWzHovE/kWk5JKvHC\njqd7n+BDZ4TJhaeEE8qy6w6lvCQYzeVM2lQBAoGBANN5rZxmnEMGktBANI9HBFOP\nd5yVwxVvZlkf19GlXLyowJVvZtBXm9Tb03UWiiTYbVZvZiGLoyE5Z9xV4Lzy3gZV\n9OTovDpwM51qWsSaAgdHdg999Q0ObcArTXzGOsIZk1ByNxkxg7CdkUmQ5Y+933b5\nRLFq2Hf+MLhPkVjVCL9d\n-----END PRIVATE KEY-----\n",
+  "client_email": "cloud-storage@single-cirrus-390717.iam.gserviceaccount.com",
+  "client_id": "104589134215020039711",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/cloud-storage%40single-cirrus-390717.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
