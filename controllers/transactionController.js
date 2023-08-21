@@ -253,6 +253,77 @@ exports.cancelOrder = (io, socket) => {
   });
 };
 
+exports.purchaseGoods = (io, socket) => {
+  socket.on("purchaseGoods", async (body) => {
+    let data = {
+      email: body.user.email,
+    };
+    const addStock = (products) => {
+      for (let i = 0; i < products.length; i++) {
+        products[i].remaining[0] += products[i].quantity;
+      }
+
+      return products;
+    };
+    const user = await Official.findOne({ username: body.user.username });
+
+    data.state = user.state;
+    data.lga = user.lga;
+    data.unit = user.unit;
+    data.totalAmount = body.totalAmount;
+    data.deliveryFee = 0;
+    data.time = body.time;
+    data.creditBonus = 0;
+    data.status = true;
+    data.description = body.cartProducts;
+    data.phoneNumber = body.user.phoneNumber;
+    data.address = "Not Available";
+    data.salesRep = user;
+    data.transactionType = body.transactionType;
+
+    await Transaction.create(data);
+
+    const newProducts = await addStock(body.cartProducts);
+
+    for (let i = 0; i < newProducts.length; i++) {
+      await Product.findByIdAndUpdate(newProducts[i]._id, {
+        remaining: newProducts[i].remaining,
+      });
+    }
+    const products = await new FetchQuery(body.query, Product).fetchData();
+
+    for (let i = 0; i < products.results.length; i++) {
+      if (products.results[i].productImage != "") {
+        products.results[i].productImageUrl = await getAFileUrl(
+          products.results[i].productImage
+        );
+      }
+
+      if (products.results[i].promoBanner) {
+        products.results[i].promoBannerUrl = await getAFileUrl(
+          products.results[i].promoBanner
+        );
+      }
+
+      if (products.results[i].productImages.length > 0) {
+        for (let x = 0; x < products.results[i].productImages.length; x++) {
+          products.results[i].productImagesUrl[x] = await getAFileUrl(
+            products.results[i].productImages[x]
+          );
+        }
+      }
+    }
+
+    const form = {
+      status: "success",
+      products: products,
+      username: user.username,
+    };
+
+    io.emit("purchasedGoods", form);
+  });
+};
+
 // exports.updateTransaction = catchAsync(async (req, res, next) => {
 //   const filesToDelete = [];
 //   let data = req.body;

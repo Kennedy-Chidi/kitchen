@@ -48,11 +48,7 @@ io.on("connection", (socket) => {
   transactionController.createOrder(io, socket);
   transactionController.cancelOrder(io, socket);
   transactionController.approveOrder(io, socket);
-
-  // chatController.createChat(io, socket);
-  // chatController.endChat(io, socket);
-  // chatController.getRooms(io, socket);
-  // chatController.getOffices(io, socket);
+  transactionController.purchaseGoods(io, socket);
   productController.fetchItems(io, socket);
   // orderController.updateOrder(io, socket);
   // orderController.createOrder(io, socket);

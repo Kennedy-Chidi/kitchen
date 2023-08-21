@@ -449,6 +449,7 @@ exports.getSettings = catchAsync(async (req, res, next) => {
   let products;
   let users;
   let staffs;
+  let transactions;
   let orders;
 
   //////////////GET ALL COUNTRIES /////////////////
@@ -458,9 +459,15 @@ exports.getSettings = catchAsync(async (req, res, next) => {
   ).fetchData();
 
   if (status == "Staff") {
+    const user = await Officials.findOne({ username: username });
     //////////////GET  PRODUCTS /////////////////
     products = await new FetchQuery(
-      { limit: 10, page: 1, sort: "-time, productName" },
+      {
+        limit: 10,
+        page: 1,
+        sort: "productName",
+        productState: state,
+      },
       Products
     ).fetchData();
     for (let i = 0; i < products.results.length; i++) {
@@ -484,6 +491,18 @@ exports.getSettings = catchAsync(async (req, res, next) => {
         }
       }
     }
+
+    //////////////GET  APPROVED TRANSACTIONS /////////////////
+    transactions = await new FetchQuery(
+      {
+        limit: 10,
+        page: 1,
+        sort: "-time",
+        status: true,
+        state: user.state,
+      },
+      Transaction
+    ).fetchData();
 
     //////////////GET  NOTIFICATIONS /////////////////
     notifications = await new FetchQuery(
@@ -546,6 +565,7 @@ exports.getSettings = catchAsync(async (req, res, next) => {
     company,
     promotions,
     products,
+    transactions,
     users,
     staffs,
     orders,
