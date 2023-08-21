@@ -2,37 +2,32 @@ const Product = require("../models/productModel");
 const Stats = require("../models/statsModel");
 const Company = require("../models/companyModel");
 const AppError = require("../utils/appError");
-const APIFeatures = require("../utils/apiFeatures");
 const catchAsync = require("../utils/catchAsync");
 const { sendFile, getAFileUrl } = require("../config/multer");
 const Validator = require("../utils/validateData");
+const FetchQuery = require("../utils/fetchAPIQuery");
 const { ObjectId } = require("mongodb");
 
 exports.getProducts = catchAsync(async (req, res, next) => {
-  const result = new APIFeatures(Product.find(), req.query)
-    .filter()
-    .sort()
-    .limitFields();
+  const products = await new FetchQuery(req.query, Product).fetchData();
 
-  const resultLen = await result.query;
-
-  const features = result.paginate();
-
-  const products = await features.query.clone();
-
-  for (let i = 0; i < products.length; i++) {
-    if (products[i].productImage != "") {
-      products[i].productImageUrl = await getAFileUrl(products[i].productImage);
+  for (let i = 0; i < products.results.length; i++) {
+    if (products.results[i].productImage != "") {
+      products.results[i].productImageUrl = await getAFileUrl(
+        products.results[i].productImage
+      );
     }
 
-    if (products[i].promoBanner) {
-      products[i].promoBannerUrl = await getAFileUrl(products[i].promoBanner);
+    if (products.results[i].promoBanner) {
+      products.results[i].promoBannerUrl = await getAFileUrl(
+        products.results[i].promoBanner
+      );
     }
 
-    if (products[i].productImages.length > 0) {
-      for (let x = 0; x < products[i].productImages.length; x++) {
-        products[i].productImagesUrl[x] = await getAFileUrl(
-          products[i].productImages[x]
+    if (products.results[i].productImages.length > 0) {
+      for (let x = 0; x < products.results[i].productImages.length; x++) {
+        products.results[i].productImagesUrl[x] = await getAFileUrl(
+          products.results[i].productImages[x]
         );
       }
     }
@@ -41,7 +36,6 @@ exports.getProducts = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     data: products,
-    resultLength: resultLen.length,
   });
 });
 
@@ -129,7 +123,6 @@ exports.createProduct = catchAsync(async (req, res, next) => {
 exports.updateProduct = catchAsync(async (req, res, next) => {
   const filesToDelete = [];
   let data = req.body;
-  data.productStatePrice = JSON.parse(req.body.productStatePrice);
   let files = req.files;
 
   data = await Validator.trimData(data);

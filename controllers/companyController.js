@@ -1,6 +1,10 @@
 const Company = require("../models/companyModel");
 const Country = require("../models/countryModel");
 const Promotion = require("../models/promoModel");
+const Products = require("../models/productModel");
+const User = require("../models/userModel");
+const Officials = require("../models/officialModel");
+const Transaction = require("../models/transactionModel");
 const Notification = require("../models/notificationModel");
 const AppError = require("../utils/appError");
 const FetchQuery = require("../utils/fetchAPIQuery");
@@ -438,9 +442,14 @@ exports.updateCompany = catchAsync(async (req, res, next) => {
 exports.getSettings = catchAsync(async (req, res, next) => {
   const username = req.query.username;
   const status = req.query.status;
+  const state = req.query.state;
 
   let promotions;
   let notifications;
+  let products;
+  let users;
+  let staffs;
+  let orders;
 
   //////////////GET ALL COUNTRIES /////////////////
   const countries = await new FetchQuery(
@@ -449,17 +458,82 @@ exports.getSettings = catchAsync(async (req, res, next) => {
   ).fetchData();
 
   if (status == "Staff") {
+    //////////////GET  PRODUCTS /////////////////
+    products = await new FetchQuery(
+      { limit: 10, page: 1, sort: "-time, productName" },
+      Products
+    ).fetchData();
+    for (let i = 0; i < products.results.length; i++) {
+      if (products.results[i].productImage != "") {
+        products.results[i].productImageUrl = await getAFileUrl(
+          products.results[i].productImage
+        );
+      }
+
+      if (products.results[i].promoBanner) {
+        products.results[i].promoBannerUrl = await getAFileUrl(
+          products.results[i].promoBanner
+        );
+      }
+
+      if (products.results[i].productImages.length > 0) {
+        for (let x = 0; x < products.results[i].productImages.length; x++) {
+          products.results[i].productImagesUrl[x] = await getAFileUrl(
+            products.results[i].productImages[x]
+          );
+        }
+      }
+    }
+
     //////////////GET  NOTIFICATIONS /////////////////
     notifications = await new FetchQuery(
-      { limit: 5, page: 1, sort: "-time" },
+      { limit: 10, page: 1, sort: "-time" },
       Notification
     ).fetchData();
 
     //////////////GET  PROMOTIONS /////////////////
     promotions = await new FetchQuery(
-      { limit: 5, page: 1, sort: "-time" },
+      { limit: 10, page: 1, sort: "-time" },
       Promotion
     ).fetchData();
+    for (let i = 0; i < promotions.results.length; i++) {
+      if (promotions.results[i].promoBanner != undefined) {
+        promotions.results[i].promoBannerUrl = await getAFileUrl(
+          promotions.results[i].promoBanner
+        );
+      }
+    }
+
+    //////////////GET ALL USERS FOR STAFF//////////////
+    users = await new FetchQuery(
+      { limit: 10, page: 1, status: "User", sort: "-dateCreated" },
+      User
+    ).fetchData();
+
+    //////////////GET ALL OFFICIALS FOR STAFF/////////////
+    staffs = await new FetchQuery(
+      { limit: 10, page: 1, sort: "-time", status: "Staff" },
+      Officials
+    ).fetchData();
+
+    //////////////GET ONLINE ORDERS/////////////
+    const official = await Officials.findOne({
+      username: username,
+    });
+
+    if (official) {
+      orders = await new FetchQuery(
+        {
+          limit: 10,
+          page: 1,
+          sort: "-time",
+          status: false,
+          unit: official.unit,
+          transactionType: "Order",
+        },
+        Transaction
+      ).fetchData();
+    }
   }
 
   //////////////GET  COMPANY /////////////////
@@ -471,5 +545,9 @@ exports.getSettings = catchAsync(async (req, res, next) => {
     notifications,
     company,
     promotions,
+    products,
+    users,
+    staffs,
+    orders,
   });
 });

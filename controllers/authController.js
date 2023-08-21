@@ -2,11 +2,13 @@ const crypto = require("crypto");
 const { promisify } = require("util");
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
+const Notification = require("../utils/notification");
 const Product = require("../models/productModel");
 const Company = require("../models/companyModel");
 const Email = require("../models/emailModel");
 const AppError = require("../utils/appError");
 const SendEmail = require("../utils/email");
+const Record = require("../utils/userRecord");
 const catchAsync = require("../utils/catchAsync");
 const { sendFile, getFileUrl, getAFileUrl } = require("../config/multer");
 
@@ -39,64 +41,50 @@ const createSendToken = (user, statusCode, res) => {
 
 exports.signup = catchAsync(async (req, res, next) => {
   //CHECK FOR UNIQUE USERNAME
-  const userName = await User.findOne({ email: req.body.username });
+  const userName = await User.findOne({ username: req.body.username });
   if (userName) {
     return next(
-      new AppError(`Someone with the username ${userName} already exist!`, 500)
-    );
-  }
-
-  //CHECK FOR UNIQUE EMAIL
-  const userEmail = await User.findOne({ email: req.body.email });
-  if (userEmail) {
-    return next(
-      new AppError(`Someone with the email ${userEmail} already exist!`, 500)
-    );
-  }
-
-  //CHECK FOR UNIQUE PHONE NUMBER
-  const userPhone = await User.findOne({ email: req.body.phone });
-  if (userPhone) {
-    return next(
       new AppError(
-        `Someone with the phone number ${userPhone} already exist!`,
+        `Someone with the username ${userName.username} already exist!`,
         500
       )
     );
   }
 
+  //CHECK FOR UNIQUE EMAIL
+  if (!req.body.autoRegister) {
+    const userEmail = await User.findOne({ email: req.body.email });
+    if (userEmail) {
+      return next(
+        new AppError(
+          `Someone with the email ${userEmail.email} already exist!`,
+          500
+        )
+      );
+    }
+  }
+
+  //CHECK FOR UNIQUE PHONE NUMBER
+  const userPhone = await User.findOne({ phoneNumber: req.body.phoneNumber });
+  if (userPhone) {
+    return next(
+      new AppError(
+        `Someone with the phone number ${userPhone.phoneNumber} already exist!`,
+        500
+      )
+    );
+  }
+
+  req.body.unreadMessages = 1;
+  req.body.hasPurchased = false;
   const user = await User.create(req.body);
 
-  const email = await Email.findOne({ template: "signup" });
-  const company = await Company.findOne({ state: req.body.state });
-  const banner = await getAFileUrl(email.banner);
-  const from = company.systemEmail;
-  const content = email.content.replace(
-    "[company-name]",
-    `${company.companyName}`
+  (await new Record(user).setPromoRecord()).prepareEmail(
+    "signup",
+    req.body.state
   );
 
-  if (company) {
-    const companyInfo = {
-      email: from,
-      username: user.username,
-    };
-
-    const users = [companyInfo, user];
-
-    users.forEach((user) => {
-      try {
-        new SendEmail(company, user, email, banner, content, "").sendEmail();
-      } catch (err) {
-        return next(
-          new AppError(
-            `There was an error sending the email. Try again later!, ${err}`,
-            500
-          )
-        );
-      }
-    });
-  }
+  new Notification(user, "Welcome", req.body.time, "", "").sendNotification();
 
   res.status(200).json({
     status: "success",
@@ -114,7 +102,7 @@ exports.login = catchAsync(async (req, res, next) => {
   const user = await User.findOne({ username }).select("+password");
 
   if (!user || !(await user.correctPassword(password, user.password))) {
-    return next(new AppError("Incorrect email or password", 401));
+    return next(new AppError("Incorrect username or password", 401));
   }
 
   if (req.body.cartItems) {

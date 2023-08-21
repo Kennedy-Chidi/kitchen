@@ -103,6 +103,14 @@ const userSchema = new mongoose.Schema({
     default: 0,
   },
 
+  autoRegister: {
+    type: Boolean,
+    default: false,
+  },
+  hasPurchased: {
+    type: Boolean,
+    default: false,
+  },
   isPartner: Boolean,
   comment: String,
   country: String,

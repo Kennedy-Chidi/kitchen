@@ -31,6 +31,10 @@ exports.getTransactions = catchAsync(async (req, res, next) => {
 });
 
 exports.getOrders = catchAsync(async (req, res, next) => {
+  const official = await Official.findOne({
+    username: username,
+  });
+  req.query.unit = official.unit;
   const transactions = await new FetchQuery(req.query, Transaction).fetchData();
 
   res.status(200).json({
@@ -160,34 +164,17 @@ exports.createOrder = (io, socket) => {
 };
 
 exports.approveOrder = (io, socket) => {
-  socket.on("orderGoods", async (body) => {
-    const data = {
-      username: body.user.username,
-    };
-
-    const user = await User.findOne({ username: data.username });
-    const salesRep = await Official.findOne({
-      unit: user.unit,
+  socket.on("approveOrder", async (body) => {
+    const transaction = await Transaction.findByIdAndUpdate(body.id, {
+      status: true,
     });
 
-    data.email = body.user.email;
-    data.state = body.user.state;
-    data.totalAmount = body.totalAmount;
-    data.deliveryFee = body.deliveryFee;
-    data.time = body.time;
-    data.creditBonus = body.creditBonus;
-    data.status = false;
-    data.products = body.cartProducts;
-    data.phoneNumber = body.user.phoneNumber;
-    data.address = body.user.address;
-    data.salesRep = salesRep;
-
-    const result = await Transaction.create(data);
+    console.log(transaction.description, transaction.username);
     const form = {
       status: "success",
       result: "",
     };
-    io.emit("orderedGoods", form);
+    io.emit("approvedOrder", form);
   });
 
   // let data = req.body;

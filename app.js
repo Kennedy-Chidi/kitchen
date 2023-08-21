@@ -16,6 +16,7 @@ const faqRouter = require("./routes/faqRoutes");
 const notificationRouter = require("./routes/notificationRoutes");
 const partnerRouter = require("./routes/partnerRoutes");
 const productController = require("./controllers/productController");
+const promotionRouter = require("./routes/promoRoutes");
 const transactionController = require("./controllers/transactionController");
 const productRouter = require("./routes/productRoutes");
 const officialRouter = require("./routes/officialRoutes");
@@ -46,6 +47,7 @@ io.on("connection", (socket) => {
   userController.fetchUsers(io, socket);
   transactionController.createOrder(io, socket);
   transactionController.cancelOrder(io, socket);
+  transactionController.approveOrder(io, socket);
 
   // chatController.createChat(io, socket);
   // chatController.endChat(io, socket);
@@ -75,6 +77,7 @@ app.use("/api/notifications", notificationRouter);
 app.use("/api/officials", officialRouter);
 app.use("/api/partners", partnerRouter);
 app.use("/api/products", productRouter);
+app.use("/api/promotions", promotionRouter);
 app.use("/api/sms", smsRouter);
 app.use("/api/places", placesRouter);
 app.use("/api/staffs", staffRouter);

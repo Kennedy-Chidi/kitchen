@@ -26,7 +26,7 @@ module.exports = class Notify {
     const notification = await Notification.findOne({ name: this.type });
     if (notification) {
       const content = notification.content
-        ?.split("[full-name]")
+        ?.split("[username]")
         .join(this.user.username)
         .split("[moment]")
         .join(timeOfDay)

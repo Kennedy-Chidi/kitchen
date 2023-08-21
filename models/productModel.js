@@ -4,64 +4,37 @@ const productSchema = new mongoose.Schema({
   productName: {
     type: String,
   },
-  state: String,
   productImage: String,
   productStatePrice: Array,
   productImageUrl: String,
-
   productImages: Array,
-
   productImagesUrl: Array,
-
   productVideo: String,
-
   productCategories: Array,
-
   productBuyingPrice: Number,
-
   productSellingPrice: Number,
-
   productDescription: String,
-
   productBuyingUnit: String,
-
   productSellingUnit: String,
-
   productColor: String,
-
   productColorCode: String,
-
   productCountry: String,
-
   productState: String,
-
   type: String,
-
-  whishedNumber: Number,
-
   ratingNumber: Number,
-
   ratingAverage: Number,
-
   reviewId: String,
-
   isPromo: Boolean,
-
   promoType: {
     type: String,
     enum: ["Price", "Target", "Discount"],
   },
 
   totalSoldUnits: Number,
-
   totalSoldAmount: Number,
-
   totalPurchasedUnits: Number,
-
   totalPurchasedAmount: Number,
-
   productUnitPerPurchase: Number,
-
   availability: {
     type: String,
     default: "Exhausted",

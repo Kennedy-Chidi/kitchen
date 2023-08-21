@@ -1,5 +1,5 @@
 const User = require("../models/userModel");
-const Officials = require("../models/officialModel");
+const Promo = require("../models/userPromoModel");
 const Product = require("../models/productModel");
 const Transaction = require("../models/transactionModel");
 const Notice = require("../models/noticeModel");
@@ -358,14 +358,17 @@ exports.getAllInitials = catchAsync(async (req, res, next) => {
   const username = req.body.username;
   const user = req.body;
   const status = req.body.status;
-  let users;
-  let staffs;
-  let orders;
 
   //////////////GET USER NOTIFICATION MESSAGES//////////////
   const messages = await new FetchQuery(
     { limit: 5, page: 1, username: username, sort: "-time" },
     Notice
+  ).fetchData();
+
+  //////////////GET USER PROMOTION MESSAGES//////////////
+  const promos = await new FetchQuery(
+    { limit: 5, page: 1, username: username, sort: "promoTarget" },
+    Promo
   ).fetchData();
 
   //////////////GET USER TRANSACTIONS MESSAGES//////////////
@@ -374,39 +377,10 @@ exports.getAllInitials = catchAsync(async (req, res, next) => {
     Transaction
   ).fetchData();
 
-  if (status == "Staff") {
-    //////////////GET ALL USERS FOR STAFF//////////////
-    users = await new FetchQuery(
-      { limit: 5, page: 1, status: "User", sort: "-dateCreated" },
-      User
-    ).fetchData();
-
-    //////////////GET ALL OFFICIALS FOR STAFF/////////////
-    staffs = await new FetchQuery(
-      { limit: 5, page: 1, sort: "-time" },
-      Officials
-    ).fetchData();
-
-    //////////////GET ONLINE ORDERS/////////////
-    orders = await new FetchQuery(
-      {
-        limit: 5,
-        page: 1,
-        sort: "-time",
-        status: false,
-        unit: user.unit,
-        transactionType: "Order",
-      },
-      Transaction
-    ).fetchData();
-  }
-
   res.status(200).json({
     status: "success",
     messages,
     transactions,
-    users,
-    staffs,
-    orders,
+    promos,
   });
 });

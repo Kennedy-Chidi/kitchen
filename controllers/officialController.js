@@ -5,34 +5,25 @@ const Validator = require("../utils/validateData");
 const AppError = require("../utils/appError");
 const APIFeatures = require("../utils/apiFeatures");
 const catchAsync = require("../utils/catchAsync");
+const FetchQuery = require("../utils/fetchAPIQuery");
 const { sendFile, getAFileUrl } = require("../config/multer");
 
 exports.getOfficials = catchAsync(async (req, res, next) => {
-  const result = new APIFeatures(Officials.find(), req.query)
-    .filter()
-    .sort()
-    .limitFields();
-
-  const resultLen = await result.query;
-
-  const features = result.paginate();
-
-  const officials = await features.query.clone();
+  const officials = await new FetchQuery(req.query, Officials).fetchData();
 
   for (let i = 0; i < officials.length; i++) {
     if (
-      officials[i].profilePicture != "" ||
-      officials[i].profilePicture != undefined
+      officials.results[i].profilePicture != "" ||
+      officials.results[i].profilePicture != undefined
     ) {
-      officials[i].profilePictureUrl = await getAFileUrl(
-        officials[i].profilePicture
+      officials.results[i].profilePictureUrl = await getAFileUrl(
+        officials.results[i].profilePicture
       );
     }
   }
 
   res.status(200).json({
     status: "success",
-    resultLength: resultLen.length,
     data: officials,
   });
 });
@@ -50,7 +41,7 @@ exports.createOfficial = catchAsync(async (req, res, next) => {
 exports.updateOfficial = catchAsync(async (req, res, next) => {
   const data = req.body;
 
-  await Officials.findByIdAndUpdate(req.params.id, data);
+  const result = await Officials.findByIdAndUpdate(req.params.id, data);
 
   next();
 });
