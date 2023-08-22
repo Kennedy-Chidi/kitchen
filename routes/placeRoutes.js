@@ -15,6 +15,7 @@ router
   .get(placeController.getStates);
 
 router.route("/lga").get(placeController.getLGAs);
+router.route("/lga").patch(placeController.deleteLGAs);
 
 router.route("/:id").patch(placeController.editState);
 

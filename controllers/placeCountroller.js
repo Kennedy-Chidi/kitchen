@@ -143,3 +143,15 @@ exports.getLGAs = catchAsync(async (req, res, next) => {
     data: lgas,
   });
 });
+
+exports.deleteLGAs = catchAsync(async (req, res, next) => {
+  for (let i = 0; i < 15; i++) {
+    await LGA.findOneAndDelete({ name: req.body.lgaName });
+  }
+
+  res.status(200).json({
+    status: "success",
+    // resultLength: resultLen.length,
+    // data: lgas,
+  });
+});
