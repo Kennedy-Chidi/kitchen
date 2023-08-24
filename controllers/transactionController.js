@@ -103,153 +103,249 @@ exports.createOrder = (io, socket) => {
     const data = {
       username: body.user.username,
     };
-
-    const user = await User.findOne({ username: data.username });
+    const user = await User.findOne({ username: body.user.username });
     const salesRep = await Official.findOne({
       unit: user.unit,
       position: "Sales Representative",
     });
 
-    data.email = body.user.email;
-    data.state = body.user.state;
-    data.lga = body.user.lga;
-    data.unit = body.user.unit;
-    data.totalAmount = body.totalAmount;
-    data.deliveryFee = body.deliveryFee;
-    data.time = body.time;
-    data.creditBonus = body.creditBonus;
-    data.status = false;
-    data.description = body.cartProducts;
-    data.phoneNumber = body.user.phoneNumber;
-    data.address = body.user.address;
-    data.salesRep = salesRep;
-    data.transactionType = body.transactionType;
-
-    if (salesRep) {
-      await Transaction.create(data);
-
-      await new Notify(
-        body.user,
-        data.transactionType,
-        data.totalAmount,
-        body.time,
-        data.salesRep
-      ).sendNotification();
-
-      const transactions = await new FetchQuery(
-        { username: body.user.username, limit: 5, sort: "-time" },
+    if (!salesRep) {
+      const msg = `Sorry no Sales Representative currently available, please try again later.`;
+      returnSocket(
+        io,
+        body.user.username,
+        body.salesRep,
+        msg,
+        true,
+        "orderedGoods",
+        "",
+        "",
+        ""
+      );
+    } else {
+      data.email = body.user.email;
+      data.state = body.user.state;
+      data.lga = body.user.lga;
+      data.unit = body.user.unit;
+      data.totalAmount = body.totalAmount;
+      data.deliveryFee = body.deliveryFee;
+      data.time = body.time;
+      data.creditBonus = body.creditBonus;
+      data.status = false;
+      data.description = body.cartProducts;
+      data.phoneNumber = body.user.phoneNumber;
+      data.address = body.user.address;
+      data.salesRep = salesRep;
+      data.transactionType = body.transactionType;
+      const transaction = await Transaction.create(data);
+      const msg = `Your order was placed successfully, you will be called shortly.`;
+      orders = await new FetchQuery(
+        {
+          limit: 10,
+          page: 1,
+          sort: "-time",
+          status: false,
+          unit: salesRep.unit,
+          transactionType: "Order",
+        },
         Transaction
       ).fetchData();
-
-      const messages = await new FetchQuery(
-        { username: body.user.username, limit: 5, sort: "-time" },
-        Notice
-      ).fetchData();
-
-      const form = {
-        status: 200,
-        messages,
-        transactions,
-        username: body.user.username,
+      const result = {};
+      result.orders = orders;
+      result.time = body.time;
+      returnSocket(
+        io,
+        user.username,
         salesRep,
-      };
-      io.emit("orderedGoods", form);
-    } else {
-      const form = {
-        status: 400,
-      };
-      io.emit("orderedGoods", form);
+        msg,
+        false,
+        "orderedGoods",
+        "Order",
+        transaction,
+        result
+      );
     }
   });
 };
 
 exports.approveOrder = (io, socket) => {
   socket.on("approveOrder", async (body) => {
+    let status = 200;
+    let msg = "";
+    let preciseProfit = 0;
     const transaction = await Transaction.findByIdAndUpdate(body.id, {
-      status: true,
+      status: false,
     });
 
-    console.log(transaction.description, transaction.username);
-    const form = {
-      status: "success",
-      result: "",
-    };
-    io.emit("approvedOrder", form);
+    /////////////// UPDATE PRODUCT STOCK //////////////////
+    for (let i = 0; i < transaction.description.length; i++) {
+      const el = transaction.description[i];
+      const currentUnits =
+        el.remaining[0] * el.productUnitPerPurchase +
+        el.remaining[1] -
+        el.quantity;
+      el.remaining = [
+        ~~(currentUnits / el.productUnitPerPurchase),
+        currentUnits % el.productUnitPerPurchase,
+      ];
+
+      ////////////// SET PRECISE PROFIT   //////////////////
+      preciseProfit +=
+        el.productSellingPrice * el.quantity -
+        (el.productBuyingPrice / el.productUnitPerPurchase) * el.quantity;
+
+      if (currentUnits < 0) {
+        status = 500;
+        msg = `The product ${el.productName} is currently out of stock hence the order has been cancelled.`;
+        break;
+      }
+    }
+
+    const result = {};
+    result.time = body.time;
+
+    if (status != 200) {
+      await Transaction.findByIdAndDelete(body.id);
+      const orders = await new FetchQuery(
+        {
+          limit: 10,
+          page: 1,
+          sort: "-time",
+          status: false,
+          unit: transaction.salesRep.unit,
+          transactionType: "Order",
+        },
+        Transaction
+      ).fetchData();
+      result.orders = orders;
+
+      returnSocket(
+        io,
+        transaction.username,
+        transaction.salesRep,
+        msg,
+        true,
+        "cancelledOrder",
+        "CancelledOrder",
+        transaction,
+        result
+      );
+    } else {
+      /////////////// UPDATE TRANSACTION //////////////////
+      // await Transaction.findByIdAndUpdate(transaction._id, {
+      //   status: true,
+      //   preciseProfit: preciseProfit,
+      // });
+
+      /////////////// UPDATE PRODUCTS //////////////////
+      let quantity = 0;
+      for (let i = 0; i < transaction.description.length; i++) {
+        const el = transaction.description[i];
+        quantity += el.quantity;
+        await Product.findByIdAndUpdate(el._id, { remaining: el.remaining });
+      }
+
+      const products = await new FetchQuery(
+        {
+          limit: 10,
+          page: 1,
+          sort: "productName",
+          state: transaction.salesRep.state,
+        },
+        Product
+      ).fetchData();
+
+      const orders = await new FetchQuery(
+        {
+          limit: 10,
+          page: 1,
+          sort: "-time",
+          status: false,
+          unit: transaction.salesRep.unit,
+          transactionType: "Order",
+        },
+        Transaction
+      ).fetchData();
+
+      const transactions = await new FetchQuery(
+        {
+          limit: 10,
+          page: 1,
+          sort: "-time",
+          status: true,
+          unit: transaction.salesRep.unit,
+        },
+        Transaction
+      ).fetchData();
+      result.orders = orders;
+      result.orders = orders;
+      result.products = products;
+      result.transactions = transactions;
+      result.time = body.time;
+
+      //////////// UPDATE USER STATS  ///////////////////
+      await User.findOneAndUpdate(
+        { username: transaction.username },
+        {
+          hasPurchased: true,
+          $inc: {
+            totalPurchases: quantity * 1,
+            totalPurchasedAmount: transaction.totalAmount * 1,
+          },
+        }
+      );
+
+      const msg = `The order has been approved successfully.`;
+      returnSocket(
+        io,
+        transaction.username,
+        transaction.salesRep,
+        msg,
+        false,
+        "approvedOrder",
+        "ApprovedOrder",
+        transaction,
+        result
+      );
+    }
   });
-
-  // let data = req.body;
-  // let products = req.body.cartProducts;
-  // let userData = req.body.user;
-  // let totalAmount = req.body.totalAmount;
-  // let totalQuantity = req.body.totalQuantity;
-
-  // await User.findOneAndUpdate(
-  //   { username: data.user.username },
-  //   {
-  //     $inc: {
-  //       totalPurchases: data.totalQuantity * 1,
-  //       totalPurchasedAmount: data.totalAmount * 1,
-  //     },
-  //   }
-  // );
-
-  // data.description.forEach(async (el) => {
-  //   await Product.findOneAndUpdate(
-  //     { productName: el.name },
-  //     {
-  //       $inc: {
-  //         totalSoldUnits: el.quantity * 1,
-  //         totalSoldAmount: el.quantity * el.price * 1,
-  //       },
-  //     }
-  //   );
-  // });
-
-  // Notify.sendNotification(
-  //   user,
-  //   data.transactionType,
-  //   data.totalAmount,
-  //   data.time
-  // );
-
-  // res.status(200).json({
-  //   status: "success",
-  // });
 };
 
 exports.cancelOrder = (io, socket) => {
   socket.on("cancelOrder", async (body) => {
+    const transaction = await Transaction.findById(body.id);
     await Transaction.findByIdAndDelete(body.id);
     await User.findOneAndUpdate(
-      { username: body.username },
+      { username: transaction.username },
       { $inc: { unreadMessages: 1 } }
     );
-    const user = await User.findOne({ username: body.username });
 
-    const orders = await new FetchQuery(body.query, Transaction).fetchData();
-
-    await new Notify(
-      user,
-      body.transactionType,
-      body.totalAmount,
-      body.time,
-      body.salesRep
-    ).sendNotification();
-
-    const messages = await new FetchQuery(
-      { username: user.username, limit: 5, sort: "-time" },
-      Notice
+    const msg = `Your order was placed successfully, you will be called shortly.`;
+    const orders = await new FetchQuery(
+      {
+        limit: 10,
+        page: 1,
+        sort: "-time",
+        status: false,
+        unit: transaction.salesRep.unit,
+        transactionType: "Order",
+      },
+      Transaction
     ).fetchData();
-
-    const form = {
-      status: "success",
-      orders,
-      messages,
-      user,
-      salesRep: body.salesRep,
-    };
-
-    io.emit("cancelledOrder", form);
+    const result = {};
+    result.orders = orders;
+    result.time = body.data.time;
+    returnSocket(
+      io,
+      transaction.username,
+      body.data.salesRep,
+      msg,
+      false,
+      "cancelledOrder",
+      "CancelledOrder",
+      transaction,
+      result
+    );
   });
 };
 
@@ -322,6 +418,56 @@ exports.purchaseGoods = (io, socket) => {
 
     io.emit("purchasedGoods", form);
   });
+};
+
+const returnSocket = async (
+  io,
+  username,
+  salesRep,
+  msg,
+  status,
+  returnSignal,
+  template,
+  transaction,
+  result
+) => {
+  await User.findOneAndUpdate(
+    { username: username },
+    { $inc: { unreadMessages: 1 } }
+  );
+
+  console.log("First");
+
+  const user = await User.findOne({ username: username });
+
+  if (user) {
+    await new Notify(
+      user,
+      template,
+      transaction.totalAmount,
+      result.time,
+      transaction.salesRep
+    ).sendNotification();
+
+    result.user = user;
+  }
+
+  const messages = await new FetchQuery(
+    { limit: 10, sort: "-time", username: username },
+    Notice
+  ).fetchData();
+
+  const form = {
+    status,
+    msg,
+    salesRep,
+    result,
+    messages,
+    username,
+  };
+
+  console.log("Second");
+  io.emit(returnSignal, form);
 };
 
 // exports.updateTransaction = catchAsync(async (req, res, next) => {
@@ -543,3 +689,54 @@ exports.purchaseGoods = (io, socket) => {
 //     data: item,
 //   });
 // });
+
+// data.email = body.user.email;
+// data.state = body.user.state;
+// data.lga = body.user.lga;
+// data.unit = body.user.unit;
+// data.totalAmount = body.totalAmount;
+// data.deliveryFee = body.deliveryFee;
+// data.time = body.time;
+// data.creditBonus = body.creditBonus;
+// data.status = false;
+// data.description = body.cartProducts;
+// data.phoneNumber = body.user.phoneNumber;
+// data.address = body.user.address;
+// data.salesRep = salesRep;
+// data.transactionType = body.transactionType;
+
+// if (salesRep) {
+//   await Transaction.create(data);
+
+//   await new Notify(
+//     body.user,
+//     data.transactionType,
+//     data.totalAmount,
+//     body.time,
+//     data.salesRep
+//   ).sendNotification();
+
+//   const transactions = await new FetchQuery(
+//     { username: body.user.username, limit: 5, sort: "-time" },
+//     Transaction
+//   ).fetchData();
+
+//   const messages = await new FetchQuery(
+//     { username: body.user.username, limit: 5, sort: "-time" },
+//     Notice
+//   ).fetchData();
+
+//   const form = {
+//     status: 200,
+//     messages,
+//     transactions,
+//     username: body.user.username,
+//     salesRep,
+//   };
+//   io.emit("orderedGoods", form);
+// } else {
+//   const form = {
+//     status: 400,
+//   };
+//   io.emit("orderedGoods", form);
+// }

@@ -15,14 +15,15 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
   const users = await new FetchQuery(req.query, User).fetchData();
 
   for (let i = 0; i < users.length; i++) {
-    if (users[i].profilePicture != "") {
-      users[i].profilePictureUrl = await getAFileUrl(users[i].profilePicture);
+    if (users.results[i].profilePicture != "") {
+      users.results[i].profilePictureUrl = await getAFileUrl(
+        users.results[i].profilePicture
+      );
     }
   }
 
   res.status(200).json({
     status: "success",
-    resultLength: resultLen.length,
     data: users,
   });
 });
@@ -74,8 +75,6 @@ exports.editUser = catchAsync(async (req, res, next) => {
       filesToDelete.push(oldUser.profilePicture);
     }
   }
-
-  console.log(data);
 
   const user = await User.findByIdAndUpdate(req.params.id, data);
 
@@ -342,7 +341,6 @@ exports.getNotice = catchAsync(async (req, res, next) => {
     .limitFields();
 
   const resultLen = await result.query;
-  console.log("Hello");
   const features = result.paginate();
 
   const notices = await features.query.clone();
@@ -361,19 +359,19 @@ exports.getAllInitials = catchAsync(async (req, res, next) => {
 
   //////////////GET USER NOTIFICATION MESSAGES//////////////
   const messages = await new FetchQuery(
-    { limit: 5, page: 1, username: username, sort: "-time" },
+    { limit: 10, page: 1, sort: "-time", username: username },
     Notice
   ).fetchData();
 
   //////////////GET USER PROMOTION MESSAGES//////////////
   const promos = await new FetchQuery(
-    { limit: 5, page: 1, username: username, sort: "promoTarget" },
+    { limit: 10, page: 1, username: username, sort: "promoTarget" },
     Promo
   ).fetchData();
 
   //////////////GET USER TRANSACTIONS MESSAGES//////////////
   const transactions = await new FetchQuery(
-    { limit: 5, page: 1, username: username, sort: "-time" },
+    { limit: 10, page: 1, username: username, sort: "-time" },
     Transaction
   ).fetchData();
 
