@@ -32,6 +32,7 @@ router.route("/:id").patch(
   companyController.getCompany
 );
 
+router.route("/reset").post(companyController.resetCompany);
 router.route("/all/settings").get(companyController.getSettings);
 
 module.exports = router;

@@ -18,7 +18,6 @@ router
   );
 router.post("/forgotten-password", authController.forgotPassword);
 router.patch("/reset-password/:token", authController.resetPassword);
-router.patch("/reset", userController.resetCompany);
 router.patch(
   "/update-user/:id",
   userController.editUser,

@@ -275,22 +275,6 @@ exports.getApplication = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.resetCompany = catchAsync(async (req, res, next) => {
-  await User.updateMany({ totalPurchases: 0, totalPurchasedAmount: 0 });
-  await Notice.deleteMany();
-  await Transaction.deleteMany();
-  await Product.updateMany({
-    totalPurchasedAmount: 0,
-    totalPurchasedUnits: 0,
-    totalSoldAmount: 0,
-    totalSoldUnits: 0,
-  });
-
-  res.status(200).json({
-    status: "success",
-  });
-});
-
 exports.fetchUsers = (io, socket) => {
   socket.on("fetchUsers", async (item) => {
     const limit = item.limit;
@@ -371,7 +355,7 @@ exports.getAllInitials = catchAsync(async (req, res, next) => {
 
   //////////////GET USER TRANSACTIONS MESSAGES//////////////
   const transactions = await new FetchQuery(
-    { limit: 10, page: 1, username: username, sort: "-time" },
+    { limit: 10, page: 1, status: true, username: username, sort: "-time" },
     Transaction
   ).fetchData();
 

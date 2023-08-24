@@ -2,6 +2,7 @@ const Transaction = require("../models/transactionModel");
 const User = require("../models/userModel");
 const Official = require("../models/officialModel");
 const Product = require("../models/productModel");
+const UserPromo = require("../models/userPromoModel");
 const Notice = require("../models/noticeModel");
 const Notify = require("../utils/notification");
 const AppError = require("../utils/appError");
@@ -232,18 +233,62 @@ exports.approveOrder = (io, socket) => {
       );
     } else {
       /////////////// UPDATE TRANSACTION //////////////////
-      // await Transaction.findByIdAndUpdate(transaction._id, {
-      //   status: true,
-      //   preciseProfit: preciseProfit,
-      // });
+      await Transaction.findByIdAndUpdate(transaction._id, {
+        status: true,
+        preciseProfit: preciseProfit,
+      });
+
+      /////////////// CHECK PROMOS //////////////////
+      const promo = await UserPromo.findOne({
+        username: transaction.username,
+        promoStatus: false,
+      }).sort("promoTarget");
+
+      let extraAmount = 0;
+      let currentAmount = promo.promoAmount + transaction.totalAmount;
+
+      const addToPromo = async (amount, username, status) => {
+        await UserPromo.findOneAndUpdate(
+          {
+            username: username,
+            promoStatus: false,
+          },
+          {
+            promoStatus: status,
+            promoAmount: amount * 1,
+          }
+        ).sort("promoTarget");
+      };
+
+      /////////////// UPDATE PROMO HISTORY //////////////////
+      if (currentAmount > promo.promoTarget) {
+        extraAmount = currentAmount - promo.promoTarget;
+
+        addToPromo(promo.promoTarget, transaction.username, true);
+        addToPromo(extraAmount * 1, transaction.username, false);
+      } else {
+        addToPromo(currentAmount * 1, transaction.username, false);
+      }
 
       /////////////// UPDATE PRODUCTS //////////////////
       let quantity = 0;
       for (let i = 0; i < transaction.description.length; i++) {
         const el = transaction.description[i];
         quantity += el.quantity;
-        await Product.findByIdAndUpdate(el._id, { remaining: el.remaining });
+        const x = await Product.findByIdAndUpdate(el._id, {
+          remaining: el.remaining,
+        });
       }
+
+      const promos = await new FetchQuery(
+        {
+          limit: 10,
+          page: 1,
+          sort: "promoTarget",
+          username: transaction.username,
+        },
+        UserPromo
+      ).fetchData();
 
       const products = await new FetchQuery(
         {
@@ -278,9 +323,9 @@ exports.approveOrder = (io, socket) => {
         Transaction
       ).fetchData();
       result.orders = orders;
-      result.orders = orders;
       result.products = products;
       result.transactions = transactions;
+      result.promos = promos;
       result.time = body.time;
 
       //////////// UPDATE USER STATS  ///////////////////
@@ -436,8 +481,6 @@ const returnSocket = async (
     { $inc: { unreadMessages: 1 } }
   );
 
-  console.log("First");
-
   const user = await User.findOne({ username: username });
 
   if (user) {
@@ -465,8 +508,7 @@ const returnSocket = async (
     messages,
     username,
   };
-
-  console.log("Second");
+  console.log("Approved");
   io.emit(returnSignal, form);
 };
 

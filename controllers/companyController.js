@@ -1,11 +1,14 @@
 const Company = require("../models/companyModel");
 const Country = require("../models/countryModel");
-const Promotion = require("../models/promoModel");
-const Products = require("../models/productModel");
-const User = require("../models/userModel");
-const Officials = require("../models/officialModel");
-const Transaction = require("../models/transactionModel");
+const Notice = require("../models/noticeModel");
 const Notification = require("../models/notificationModel");
+const Officials = require("../models/officialModel");
+const Products = require("../models/productModel");
+const Promotion = require("../models/promoModel");
+const Transaction = require("../models/transactionModel");
+const User = require("../models/userModel");
+const UserPromo = require("../models/userPromoModel");
+
 const AppError = require("../utils/appError");
 const FetchQuery = require("../utils/fetchAPIQuery");
 const catchAsync = require("../utils/catchAsync");
@@ -437,6 +440,37 @@ exports.updateCompany = catchAsync(async (req, res, next) => {
 
   req.files = filesToDelete;
   next();
+});
+
+exports.resetCompany = catchAsync(async (req, res, next) => {
+  await UserPromo.updateMany({
+    promoAmount: 0,
+    promoStart: 0,
+    promoStatus: false,
+    promoEnd: 0,
+  });
+  await User.updateMany({
+    totalPurchases: 0,
+    totalPurchasedAmount: 0,
+    hasPurchased: false,
+    creditBonus: 0,
+    hasCommented: false,
+    unreadMessages: 0,
+    rating: 3,
+  });
+  await Transaction.deleteMany();
+  await Notice.deleteMany();
+
+  const products = await Products.find();
+
+  for (let i = 0; i < products.length; i++) {
+    const el = products[i];
+    await Products.findByIdAndUpdate(el._id, { remaining: [3, 0] });
+  }
+
+  res.status(200).json({
+    status: "success",
+  });
 });
 
 exports.getSettings = catchAsync(async (req, res, next) => {
