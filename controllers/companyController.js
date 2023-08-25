@@ -98,19 +98,19 @@ exports.updateCompany = catchAsync(async (req, res, next) => {
   //   }
   // });
 
-  // if (data.announcements.length > 0) {
-  //   data.announcements.forEach((el) => {
-  //     const result = Validator.max500(el);
-  //     if (!result) {
-  //       return next(
-  //         new AppError(
-  //           `An announcement contains more than 500 characters, please reduce it.`,
-  //           500
-  //         )
-  //       );
-  //     }
-  //   });
-  // }
+  if (data.announcements.length > 0) {
+    data.announcements.forEach((el) => {
+      const result = Validator.max500(el);
+      if (!result) {
+        return next(
+          new AppError(
+            `An announcement contains more than 500 characters, please reduce it.`,
+            500
+          )
+        );
+      }
+    });
+  }
 
   await Company.findByIdAndUpdate(req.params.id, data, {
     new: true,

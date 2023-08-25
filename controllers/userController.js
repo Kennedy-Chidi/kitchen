@@ -1,6 +1,7 @@
 const User = require("../models/userModel");
 const Promo = require("../models/userPromoModel");
 const Product = require("../models/productModel");
+const Company = require("../models/companyModel");
 const Transaction = require("../models/transactionModel");
 const Notice = require("../models/noticeModel");
 const FetchQuery = require("../utils/fetchAPIQuery");
@@ -347,6 +348,13 @@ exports.getAllInitials = catchAsync(async (req, res, next) => {
     Notice
   ).fetchData();
 
+  //////////////GET USER NOTIFICATION MESSAGES//////////////
+  const companyResult = await new FetchQuery(
+    { limit: 10, page: 1, sort: "country", state: user.state },
+    Company
+  ).fetchData();
+  const company = companyResult.results[0];
+
   //////////////GET USER PROMOTION MESSAGES//////////////
   const promos = await new FetchQuery(
     { limit: 10, page: 1, username: username, sort: "promoTarget" },
@@ -364,5 +372,6 @@ exports.getAllInitials = catchAsync(async (req, res, next) => {
     messages,
     transactions,
     promos,
+    company,
   });
 });
