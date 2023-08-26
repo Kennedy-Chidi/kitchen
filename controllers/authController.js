@@ -77,6 +77,7 @@ exports.signup = catchAsync(async (req, res, next) => {
 
   req.body.unreadMessages = 1;
   req.body.hasPurchased = false;
+
   const user = await User.create(req.body);
 
   (await new Record(user).setPromoRecord()).prepareEmail(

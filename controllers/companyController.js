@@ -8,6 +8,7 @@ const Promotion = require("../models/promoModel");
 const Transaction = require("../models/transactionModel");
 const User = require("../models/userModel");
 const UserPromo = require("../models/userPromoModel");
+const Email = require("../models/emailModel");
 
 const AppError = require("../utils/appError");
 const FetchQuery = require("../utils/fetchAPIQuery");
@@ -165,6 +166,7 @@ exports.getSettings = catchAsync(async (req, res, next) => {
   let transactions;
   let companies;
   let orders;
+  let emails;
 
   //////////////GET ALL COUNTRIES /////////////////
   const countries = await new FetchQuery(
@@ -203,6 +205,24 @@ exports.getSettings = catchAsync(async (req, res, next) => {
             products.results[i].productImages[x]
           );
         }
+      }
+    }
+
+    //////////////GET  EMAILS /////////////////
+    emails = await new FetchQuery(
+      {
+        limit: 10,
+        page: 1,
+        sort: "productName",
+        productState: state,
+      },
+      Email
+    ).fetchData();
+    for (let i = 0; i < emails.results.length; i++) {
+      if (emails.results[i].Banner) {
+        emails.results[i].BannerUrl = await getAFileUrl(
+          emails.results[i].Banner
+        );
       }
     }
 
@@ -290,5 +310,6 @@ exports.getSettings = catchAsync(async (req, res, next) => {
     staffs,
     orders,
     companies,
+    emails,
   });
 });
