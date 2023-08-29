@@ -282,9 +282,17 @@ exports.getSettings = catchAsync(async (req, res, next) => {
 
     //////////////GET ALL BANNERS/////////////
     banners = await new FetchQuery(
-      { limit: 10, page: 1, sort: "-time", status: "Staff" },
+      { limit: 10, page: 1, sort: "-time" },
       Banners
     ).fetchData();
+
+    for (let i = 0; i < banners.results.length; i++) {
+      if (banners.results[i].bannerImage != "") {
+        banners.results[i].bannerImageUrl = await getAFileUrl(
+          banners.results[i].bannerImage
+        );
+      }
+    }
 
     //////////////GET ONLINE ORDERS/////////////
     const official = await Officials.findOne({

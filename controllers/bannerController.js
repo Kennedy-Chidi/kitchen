@@ -1,4 +1,6 @@
 const Banner = require("../models/bannerModel");
+
+const FetchQuery = require("../utils/fetchAPIQuery");
 const AppError = require("../utils/appError");
 const APIFeatures = require("../utils/apiFeatures");
 const catchAsync = require("../utils/catchAsync");
@@ -34,26 +36,18 @@ exports.createBanner = catchAsync(async (req, res, next) => {
 });
 
 exports.getAllBanner = catchAsync(async (req, res, next) => {
-  const result = new APIFeatures(Banner.find(), req.query)
-    .filter()
-    .sort()
-    .limitFields();
+  let banners = await new FetchQuery(req.query, Banner).fetchData();
 
-  const resultLen = await result.query;
-
-  const features = result.paginate();
-
-  const banners = await features.query.clone();
-
-  for (let i = 0; i < banners.length; i++) {
-    if (banners[i].bannerImage != "") {
-      banners[i].bannerImageUrl = await getAFileUrl(banners[i].bannerImage);
+  for (let i = 0; i < banners.results.length; i++) {
+    if (banners.results[i].bannerImage != "") {
+      banners.results[i].bannerImageUrl = await getAFileUrl(
+        banners.results[i].bannerImage
+      );
     }
   }
 
   res.status(200).json({
     status: "success",
-    resultLength: resultLen.length,
     data: banners,
   });
 });

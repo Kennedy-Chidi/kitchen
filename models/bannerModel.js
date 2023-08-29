@@ -7,6 +7,7 @@ const bannerSchema = new mongoose.Schema({
   bannerSubtitle: String,
   bannerImage: String,
   bannerImageUrl: String,
+  bannerCategory: String,
   status: {
     type: Boolean,
     default: false,
