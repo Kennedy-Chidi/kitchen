@@ -3,6 +3,7 @@ const Country = require("../models/countryModel");
 const Notice = require("../models/noticeModel");
 const Notification = require("../models/notificationModel");
 const Officials = require("../models/officialModel");
+const Banners = require("../models/bannerModel");
 const Products = require("../models/productModel");
 const Promotion = require("../models/promoModel");
 const Transaction = require("../models/transactionModel");
@@ -167,6 +168,7 @@ exports.getSettings = catchAsync(async (req, res, next) => {
   let companies;
   let orders;
   let emails;
+  let banners;
 
   //////////////GET ALL COUNTRIES /////////////////
   const countries = await new FetchQuery(
@@ -278,6 +280,12 @@ exports.getSettings = catchAsync(async (req, res, next) => {
       Officials
     ).fetchData();
 
+    //////////////GET ALL BANNERS/////////////
+    banners = await new FetchQuery(
+      { limit: 10, page: 1, sort: "-time", status: "Staff" },
+      Banners
+    ).fetchData();
+
     //////////////GET ONLINE ORDERS/////////////
     const official = await Officials.findOne({
       username: username,
@@ -310,5 +318,6 @@ exports.getSettings = catchAsync(async (req, res, next) => {
     orders,
     companies,
     emails,
+    banners,
   });
 });
