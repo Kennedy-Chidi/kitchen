@@ -111,7 +111,10 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  referredBy: String,
+  referredBy: {
+    type: String,
+    default: "",
+  },
   isPartner: Boolean,
   comment: String,
   country: String,

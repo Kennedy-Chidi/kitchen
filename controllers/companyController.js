@@ -213,8 +213,7 @@ exports.getSettings = catchAsync(async (req, res, next) => {
       {
         limit: 10,
         page: 1,
-        sort: "productName",
-        productState: state,
+        sort: "title",
       },
       Email
     ).fetchData();

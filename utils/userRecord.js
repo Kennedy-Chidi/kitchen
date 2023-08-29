@@ -1,4 +1,5 @@
 const UserPromo = require("../models/userPromoModel");
+const User = require("../models/userModel");
 const Promo = require("../models/promoModel");
 const Company = require("../models/companyModel");
 const Email = require("../models/emailModel");
@@ -31,7 +32,8 @@ module.exports = class Record {
       promoStatus: false,
     };
 
-    promos.forEach((el) => {
+    for (let i = 0; i < promos.length; i++) {
+      const el = promos[i];
       form.promoId = el._id;
       form.promoTarget = el.promoTarget;
       form.promoName = el.promoName;
@@ -41,31 +43,60 @@ module.exports = class Record {
       form.promoDescription = el.promoDescription;
       form.promoBanner = el.promoBanner;
       form.promoStatus = el.promoStatus;
+      await UserPromo.create(form);
+    }
 
-      UserPromo.create(form);
-    });
+    const ref = "";
+    const payload = {
+      state: this.user.state,
+      user: this.user,
+      ref,
+    };
+
+    this.prepareEmail("signup", payload);
+
+    if (this.user.referredBy != "") {
+      const refUser = await User.findOne({ username: this.user.referredBy });
+      if (refUser) {
+        const payload = {
+          state: this.user.state,
+          user: refUser,
+          referralUsername: this.user.username,
+        };
+        this.prepareEmail("referral-signup", payload);
+      }
+    }
 
     return this;
   }
 
-  async prepareEmail(template, state) {
+  async prepareEmail(template, payload) {
+    const { state, user, referralUsername } = payload;
     const email = await Email.findOne({ template: template });
     const company = await Company.findOne({ state: state });
     const banner = await getAFileUrl(email.banner);
 
-    const from = company.systemEmail;
-    const content = email.content.replace(
-      "[company-name]",
-      `${company.companyName}`
-    );
+    if (
+      email != null &&
+      email != undefined &&
+      company != null &&
+      company != undefined
+    ) {
+      const from = company.systemEmail;
+      const content = email.content
+        ?.split("[company-name]")
+        .join(company.companyName)
+        .split("[username]")
+        .join(user.username)
+        .split("[referral-username]")
+        .join(referralUsername);
 
-    if (company) {
       const companyInfo = {
         email: from,
-        username: this.user.username,
+        username: user.username,
       };
 
-      const users = [companyInfo, this.user];
+      const users = [companyInfo, user];
 
       users.forEach((user) => {
         try {

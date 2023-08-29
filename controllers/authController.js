@@ -80,10 +80,7 @@ exports.signup = catchAsync(async (req, res, next) => {
 
   const user = await User.create(req.body);
 
-  (await new Record(user).setPromoRecord()).prepareEmail(
-    "signup",
-    req.body.state
-  );
+  await new Record(user).setPromoRecord();
 
   new Notification(user, "Welcome", req.body.time, "", "").sendNotification();
 
