@@ -115,6 +115,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  commentStatus: {
+    type: Boolean,
+    default: false,
+  },
   isPartner: Boolean,
   comment: String,
   country: String,

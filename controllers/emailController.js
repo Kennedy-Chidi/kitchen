@@ -101,6 +101,8 @@ exports.updateEmail = catchAsync(async (req, res, next) => {
 
     const randomName = await sendFile(req.file);
     data.banner = `${randomName}_${req.file.originalname}`;
+  } else {
+    data.banner = undefined;
   }
 
   await Email.findByIdAndUpdate(req.params.id, data, {

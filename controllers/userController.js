@@ -294,28 +294,19 @@ exports.fetchUsers = (io, socket) => {
 };
 
 exports.getReviews = catchAsync(async (req, res, next) => {
-  const result = new APIFeatures(
-    User.find({
-      "review.subject": { $exists: true, $ne: "" },
-    }),
-    req.query
-  )
-    .filter()
-    .sort()
-    .limitFields();
+  let reviews = await new FetchQuery(req.query, User).fetchData();
 
-  const resultLen = await result.query;
-
-  const features = result.paginate();
-
-  const users = await features.query.clone();
+  for (let i = 0; i < reviews.results.length; i++) {
+    if (reviews.results[i].profilePicture != "") {
+      reviews.results[i].profilePictureUrl = await getAFileUrl(
+        reviews.results[i].profilePicture
+      );
+    }
+  }
 
   res.status(200).json({
     status: "success",
-    results: resultLen.length,
-    data: {
-      users,
-    },
+    data: reviews,
   });
 });
 

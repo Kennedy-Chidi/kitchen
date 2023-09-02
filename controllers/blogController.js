@@ -1,4 +1,6 @@
 const Blog = require("../models/blogModel");
+
+const FetchQuery = require("../utils/fetchAPIQuery");
 const AppError = require("../utils/appError");
 const APIFeatures = require("../utils/apiFeatures");
 const catchAsync = require("../utils/catchAsync");
@@ -38,21 +40,12 @@ exports.createBlog = catchAsync(async (req, res, next) => {
 });
 
 exports.getBlogs = catchAsync(async (req, res, next) => {
-  const result = new APIFeatures(Blog.find(), req.query)
-    .filter()
-    .sort()
-    .limitFields();
-
-  const resultLen = await result.query;
-
-  const features = result.paginate();
-
-  const blog = await features.query.clone();
+  let blog = await new FetchQuery(req.query, Blog).fetchData();
 
   if (blog) {
-    for (let i = 0; i < blog.length; i++) {
-      if (blog[i].banner) {
-        blog[i].bannerUrl = await getAFileUrl(blog[i].banner);
+    for (let i = 0; i < blog.results.length; i++) {
+      if (blog.results[i].banner) {
+        blog.results[i].bannerUrl = await getAFileUrl(blog.results[i].banner);
       }
     }
   }
@@ -60,7 +53,6 @@ exports.getBlogs = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     data: blog,
-    resultLength: resultLen.length,
   });
 });
 
@@ -68,23 +60,23 @@ exports.updateBlog = catchAsync(async (req, res, next) => {
   const filesToDelete = [];
   let data = req.body;
 
-  data = Validator.trimData(data);
+  // data = Validator.trimData(data);
 
-  const removeTags = async (obj) => {
-    for (let key in obj) {
-      if (
-        typeof obj[key] === "string" &&
-        obj[key] != "content" &&
-        obj[key] != "banner"
-      ) {
-        obj[key] = await Validator.removeTags(obj[key]);
-      }
-    }
+  // const removeTags = async (obj) => {
+  //   for (let key in obj) {
+  //     if (
+  //       typeof obj[key] === "string" &&
+  //       obj[key] != "content" &&
+  //       obj[key] != "banner"
+  //     ) {
+  //       obj[key] = await Validator.removeTags(obj[key]);
+  //     }
+  //   }
 
-    return obj;
-  };
+  //   return obj;
+  // };
 
-  data = await removeTags(data);
+  // data = await removeTags(data);
 
   if (req.file) {
     const oldBlog = await Blog.findById(req.params.id);
@@ -94,8 +86,10 @@ exports.updateBlog = catchAsync(async (req, res, next) => {
 
     const randomName = await sendFile(req.file);
     data.banner = `${randomName}_${req.file.originalname}`;
+  } else {
+    data.banner = undefined;
   }
-  await Blog.findByIdAndUpdate(req.params.id, req.body, {
+  await Blog.findByIdAndUpdate(req.params.id, data, {
     new: true,
     runValidators: true,
     useFindAndModify: false,

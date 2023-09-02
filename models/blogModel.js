@@ -10,6 +10,7 @@ const blogSchema = new mongoose.Schema({
   time: Number,
   author: String,
   content: String,
+  blogType: String,
 
   status: {
     type: Boolean,

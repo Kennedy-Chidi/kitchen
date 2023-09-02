@@ -4,6 +4,7 @@ const Notice = require("../models/noticeModel");
 const Notification = require("../models/notificationModel");
 const Officials = require("../models/officialModel");
 const Banners = require("../models/bannerModel");
+const Blog = require("../models/blogModel");
 const Products = require("../models/productModel");
 const Promotion = require("../models/promoModel");
 const Transaction = require("../models/transactionModel");
@@ -169,6 +170,8 @@ exports.getSettings = catchAsync(async (req, res, next) => {
   let orders;
   let emails;
   let banners;
+  let blogs;
+  let reviews;
 
   //////////////GET ALL COUNTRIES /////////////////
   const countries = await new FetchQuery(
@@ -274,6 +277,33 @@ exports.getSettings = catchAsync(async (req, res, next) => {
       User
     ).fetchData();
 
+    for (let i = 0; i < users.results.length; i++) {
+      if (users.results[i].profilePicture != "") {
+        users.results[i].profilePictureUrl = await getAFileUrl(
+          users.results[i].profilePicture
+        );
+      }
+    }
+
+    reviews = await new FetchQuery(
+      {
+        limit: 10,
+        page: 1,
+        status: "User",
+        sort: "-dateCreated",
+        hasCommented: true,
+      },
+      User
+    ).fetchData();
+
+    for (let i = 0; i < reviews.results.length; i++) {
+      if (reviews.results[i].profilePicture != "") {
+        reviews.results[i].profilePictureUrl = await getAFileUrl(
+          reviews.results[i].profilePicture
+        );
+      }
+    }
+
     //////////////GET ALL OFFICIALS FOR STAFF/////////////
     staffs = await new FetchQuery(
       { limit: 10, page: 1, sort: "-time", status: "Staff" },
@@ -291,6 +321,18 @@ exports.getSettings = catchAsync(async (req, res, next) => {
         banners.results[i].bannerImageUrl = await getAFileUrl(
           banners.results[i].bannerImage
         );
+      }
+    }
+
+    //////////////GET ALL BLOGS/////////////
+    blogs = await new FetchQuery(
+      { limit: 10, page: 1, sort: "-time" },
+      Blog
+    ).fetchData();
+
+    for (let i = 0; i < blogs.results.length; i++) {
+      if (blogs.results[i].banner != "") {
+        blogs.results[i].bannerUrl = await getAFileUrl(blogs.results[i].banner);
       }
     }
 
@@ -327,5 +369,7 @@ exports.getSettings = catchAsync(async (req, res, next) => {
     companies,
     emails,
     banners,
+    blogs,
+    reviews,
   });
 });

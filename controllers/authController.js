@@ -66,7 +66,7 @@ exports.signup = catchAsync(async (req, res, next) => {
 
   //CHECK FOR UNIQUE PHONE NUMBER
   const userPhone = await User.findOne({ phoneNumber: req.body.phoneNumber });
-  if (userPhone) {
+  if (userPhone.phoneNumber != undefined) {
     return next(
       new AppError(
         `Someone with the phone number ${userPhone.phoneNumber} already exist!`,

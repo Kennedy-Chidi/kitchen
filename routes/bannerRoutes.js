@@ -19,7 +19,7 @@ router
   .route("/:id")
   .patch(
     authController.protect,
-    upload.single("image"),
+    upload.single("bannerImage"),
     bannerController.updateBanner,
     deleteFile,
     bannerController.getAllBanner
