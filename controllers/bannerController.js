@@ -77,6 +77,8 @@ exports.updateBanner = catchAsync(async (req, res, next) => {
     const randomName = await sendFile(req.file);
     data.bannerImage = `${randomName}_${req.file.originalname}`;
     filesToDelete.push(oldBanner.bannerImage);
+  } else {
+    data.bannerImage = undefined;
   }
 
   await Banner.findByIdAndUpdate(req.params.id, data, {

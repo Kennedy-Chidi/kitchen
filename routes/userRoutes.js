@@ -65,6 +65,7 @@ router
   .route("/:id")
   .get(userController.getUser)
   .patch(
+    authController.protect,
     upload.single("profilePicture"),
     userController.editUser,
     deleteFile,

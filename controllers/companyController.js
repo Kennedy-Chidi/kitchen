@@ -179,6 +179,32 @@ exports.getSettings = catchAsync(async (req, res, next) => {
     Country
   ).fetchData();
 
+  //////////////GET ALL BANNERS/////////////
+  banners = await new FetchQuery(
+    { limit: 10, page: 1, sort: "-time" },
+    Banners
+  ).fetchData();
+
+  for (let i = 0; i < banners.results.length; i++) {
+    if (banners.results[i].bannerImage != "") {
+      banners.results[i].bannerImageUrl = await getAFileUrl(
+        banners.results[i].bannerImage
+      );
+    }
+  }
+
+  //////////////GET ALL BLOGS/////////////
+  blogs = await new FetchQuery(
+    { limit: 10, page: 1, sort: "-time" },
+    Blog
+  ).fetchData();
+
+  for (let i = 0; i < blogs.results.length; i++) {
+    if (blogs.results[i].banner != "") {
+      blogs.results[i].bannerUrl = await getAFileUrl(blogs.results[i].banner);
+    }
+  }
+
   if (status == "Staff") {
     const user = await Officials.findOne({ username: username });
     //////////////GET  PRODUCTS /////////////////
@@ -309,32 +335,6 @@ exports.getSettings = catchAsync(async (req, res, next) => {
       { limit: 10, page: 1, sort: "-time", status: "Staff" },
       Officials
     ).fetchData();
-
-    //////////////GET ALL BANNERS/////////////
-    banners = await new FetchQuery(
-      { limit: 10, page: 1, sort: "-time" },
-      Banners
-    ).fetchData();
-
-    for (let i = 0; i < banners.results.length; i++) {
-      if (banners.results[i].bannerImage != "") {
-        banners.results[i].bannerImageUrl = await getAFileUrl(
-          banners.results[i].bannerImage
-        );
-      }
-    }
-
-    //////////////GET ALL BLOGS/////////////
-    blogs = await new FetchQuery(
-      { limit: 10, page: 1, sort: "-time" },
-      Blog
-    ).fetchData();
-
-    for (let i = 0; i < blogs.results.length; i++) {
-      if (blogs.results[i].banner != "") {
-        blogs.results[i].bannerUrl = await getAFileUrl(blogs.results[i].banner);
-      }
-    }
 
     //////////////GET ONLINE ORDERS/////////////
     const official = await Officials.findOne({

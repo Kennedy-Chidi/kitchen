@@ -60,22 +60,17 @@ exports.editUser = catchAsync(async (req, res, next) => {
   const data = req.body;
   const filesToDelete = [];
 
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
-  }
-
-  const oldUser = await User.findById(req.params.id);
-
   if (req.file) {
+    const oldUser = await User.findById(req.params.id);
+
     const randomName = await sendFile(req.file);
     data.profilePicture = `${randomName}_${req.file.originalname}`;
     if (oldUser.profilePicture) {
       filesToDelete.push(oldUser.profilePicture);
     }
   }
+
+  console.log(data);
 
   const user = await User.findByIdAndUpdate(req.params.id, data);
 
