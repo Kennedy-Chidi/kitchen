@@ -5,6 +5,10 @@ const partnerSchema = new mongoose.Schema({
   image: String,
   url: String,
   imageUrl: String,
+  status: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const Partner = mongoose.model("Partner", partnerSchema);

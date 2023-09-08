@@ -4,23 +4,17 @@ const APIFeatures = require("../utils/apiFeatures");
 const catchAsync = require("../utils/catchAsync");
 const { sendFile, getAFileUrl } = require("../config/multer");
 const Validator = require("../utils/validateData");
+const FetchQuery = require("../utils/fetchAPIQuery");
 
 exports.getPartners = catchAsync(async (req, res, next) => {
-  const result = new APIFeatures(Partner.find(), req.query)
-    .filter()
-    .sort()
-    .limitFields();
-
-  const resultLen = await result.query;
-
-  const features = result.paginate();
-
-  const partners = await features.query.clone();
+  const partners = await new FetchQuery(req.query, Partner).fetchData();
 
   if (partners) {
-    for (let i = 0; i < partners.length; i++) {
-      if (partners[i].image) {
-        partners[i].imageUrl = await getAFileUrl(partners[i].image);
+    for (let i = 0; i < partners.results.length; i++) {
+      if (partners.results[i].image) {
+        partners.results[i].imageUrl = await getAFileUrl(
+          partners.results[i].image
+        );
       }
     }
   }
@@ -28,7 +22,6 @@ exports.getPartners = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     data: partners,
-    resultLength: resultLen.length,
   });
 });
 
@@ -79,21 +72,18 @@ exports.updatePartner = catchAsync(async (req, res, next) => {
 
   data = await removeTags(data);
 
-  const partner = await Partner.findById(req.params.id);
-
   if (file) {
-    if (file.image) {
-      const randomName = await sendFile(file.image);
-      data.image = `${randomName}_${file.image.originalname}`;
-      if (partner.image) {
-        filesToDelete.push(partner.image);
-      }
-    } else {
-      data.image = undefined;
+    const partner = await Partner.findById(req.params.id);
+    const randomName = await sendFile(file);
+    data.image = `${randomName}_${file.originalname}`;
+    if (partner.image) {
+      filesToDelete.push(partner.image);
     }
+  } else {
+    data.image = undefined;
   }
 
-  await partner.findByIdAndUpdate(req.params.id, data);
+  await Partner.findByIdAndUpdate(req.params.id, data);
 
   req.files = filesToDelete;
 

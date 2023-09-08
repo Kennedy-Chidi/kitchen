@@ -4,6 +4,7 @@ const Notice = require("../models/noticeModel");
 const Notification = require("../models/notificationModel");
 const Officials = require("../models/officialModel");
 const Banners = require("../models/bannerModel");
+const Partners = require("../models/partnerModel");
 const Blog = require("../models/blogModel");
 const Products = require("../models/productModel");
 const Promotion = require("../models/promoModel");
@@ -371,5 +372,30 @@ exports.getSettings = catchAsync(async (req, res, next) => {
     banners,
     blogs,
     reviews,
+  });
+});
+
+exports.getPages = catchAsync(async (req, res, next) => {
+  // const username = req.query.username;
+  // const status = req.query.status;
+  // const state = req.query.state;
+
+  //////////////GET ALL PARTNERS/////////////
+  let partners = await new FetchQuery(
+    { limit: 10, page: 1, sort: "-time" },
+    Partners
+  ).fetchData();
+
+  for (let i = 0; i < partners.results.length; i++) {
+    if (partners.results[i].image != "") {
+      partners.results[i].imageUrl = await getAFileUrl(
+        partners.results[i].image
+      );
+    }
+  }
+
+  res.status(200).json({
+    status: "success",
+    partners,
   });
 });

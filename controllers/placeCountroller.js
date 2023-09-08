@@ -2,6 +2,8 @@ const States = require("../models/statesModel");
 const Country = require("../models/countryModel");
 const User = require("../models/userModel");
 const Banner = require("../models/bannerModel");
+const Company = require("../models/companyModel");
+const Partner = require("../models/partnerModel");
 const Blog = require("../models/blogModel");
 const LGA = require("../models/lgaModel");
 const AppError = require("../utils/appError");
@@ -74,6 +76,37 @@ exports.getStates = catchAsync(async (req, res, next) => {
     }
   }
 
+  //////////////GET ALL HOME COMPANY/////////////
+  let company = await new FetchQuery(
+    {
+      limit: 10,
+      page: 1,
+      sort: "state",
+    },
+    Company
+  ).fetchData();
+
+  company = company.results[0];
+
+  //////////////GET ALL HOME BANNERS/////////////
+  let partners = await new FetchQuery(
+    {
+      limit: 10,
+      page: 1,
+      sort: "-time",
+      status: true,
+    },
+    Partner
+  ).fetchData();
+
+  for (let i = 0; i < partners.results.length; i++) {
+    if (partners.results[i].image != "") {
+      partners.results[i].imageUrl = await getAFileUrl(
+        partners.results[i].image
+      );
+    }
+  }
+
   const result = new APIFeatures(States.find(), req.query)
     .filter()
     .sort()
@@ -93,6 +126,8 @@ exports.getStates = catchAsync(async (req, res, next) => {
     blogTutorials,
     reviews,
     homeBlogs,
+    partners,
+    company,
   });
 });
 

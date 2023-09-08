@@ -20,5 +20,6 @@ router
 
 router.route("/reset").post(companyController.resetCompany);
 router.route("/all/settings").get(companyController.getSettings);
+router.route("/all/pages").get(companyController.getPages);
 
 module.exports = router;
