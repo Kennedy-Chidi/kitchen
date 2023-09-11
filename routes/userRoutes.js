@@ -17,6 +17,7 @@ router
     authController.getAUser
   );
 router.post("/forgotten-password", authController.forgotPassword);
+router.post("/subscribe", userController.subscribe);
 router.patch("/reset-password/:token", authController.resetPassword);
 router.patch(
   "/update-user/:id",

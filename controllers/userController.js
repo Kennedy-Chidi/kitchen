@@ -305,6 +305,15 @@ exports.getReviews = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.subscribe = catchAsync(async (req, res, next) => {
+  const email = req.body;
+
+  res.status(200).json({
+    status: "success",
+    data: email,
+  });
+});
+
 exports.getNotice = catchAsync(async (req, res, next) => {
   const result = new APIFeatures(Notice.find(), req.query)
     .filter()
