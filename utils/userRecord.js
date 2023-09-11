@@ -14,6 +14,20 @@ module.exports = class Record {
     this.user = user;
   }
 
+  async getCompanyEmailDetails(template, token) {
+    const companyEmail = await Email.findOne({ template: template });
+    const company = await Company.findOne();
+    const banner = await getAFileUrl(companyEmail.banner);
+    const resetUrl = `${company.companyDomain}/reset-password/?token=${token}`;
+
+    const content = companyEmail.content.replace(
+      "((company-name))",
+      `${company.companyName}`
+    );
+
+    return { company, banner, content, companyEmail, resetUrl };
+  }
+
   async setPromoRecord() {
     const promos = await Promo.find();
     const form = {
@@ -72,9 +86,11 @@ module.exports = class Record {
 
   async prepareEmail(template, payload) {
     const { state, user, referralUsername } = payload;
-    const email = await Email.findOne({ template: template });
-    const company = await Company.findOne({ state: state });
-    const banner = await getAFileUrl(email.banner);
+
+    const { company, banner, content, companyEmail } =
+      await this.getCompanyEmailDetails(template, "");
+
+    const email = companyEmail;
 
     if (
       email != null &&
@@ -102,16 +118,74 @@ module.exports = class Record {
         try {
           new SendEmail(company, user, email, banner, content, "").sendEmail();
         } catch (err) {
-          return next(
-            new AppError(
-              `There was an error sending the email. Try again later!, ${err}`,
-              500
-            )
-          );
+          return err;
         }
       });
     }
 
     return this;
+  }
+
+  async sendContactEmail(template, payload) {
+    const { name, email, message } = payload;
+
+    const { company, banner, content, companyEmail } =
+      await this.getCompanyEmailDetails(template, "");
+
+    if (
+      companyEmail != null &&
+      companyEmail != undefined &&
+      company != null &&
+      company != undefined
+    ) {
+      const user = {
+        email: company.systemEmail,
+        username: name,
+      };
+
+      company.systemEmail = email;
+      companyEmail.template = "email";
+
+      try {
+        new SendEmail(
+          company,
+          user,
+          companyEmail,
+          banner,
+          message,
+          ""
+        ).sendEmail();
+      } catch (err) {
+        console.log(err);
+        return err;
+      }
+    }
+
+    return this;
+  }
+
+  async forgottenPassword(token) {
+    const { company, banner, content, companyEmail, resetUrl } =
+      await this.getCompanyEmailDetails("reset-password", token);
+    const user = this.user;
+
+    try {
+      new SendEmail(
+        company,
+        user,
+        companyEmail,
+        banner,
+        content,
+        resetUrl
+      ).sendEmail();
+    } catch (err) {
+      console.log(err);
+      return next(
+        new AppError(
+          `There was an error sending the email. Try again later!`,
+          500
+        )
+      );
+    }
   }
 };

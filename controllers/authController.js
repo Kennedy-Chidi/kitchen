@@ -161,45 +161,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   const resetToken = oldUser.createPasswordResetToken();
   const user = await oldUser.save({ validateBeforeSave: false });
 
-  const email = await Email.find({ template: "forgotten-password" });
-  const companyData = await Company.find();
-  const company = companyData[0];
-  // const domainName = company.companyURL;
-  const domainName = "http://localhost:3000";
-  const from = company.systemEmail;
-  const content = email[0]?.content.replace(
-    "((company-name))",
-    `${company.companyName}`
-  );
-
-  try {
-    const resetURL = `${domainName}/reset-password?token=${resetToken}`;
-    const banner = `${domainName}/uploads/${email[0]?.banner}`;
-    new SendEmail(
-      from,
-      user,
-      email[0]?.template,
-      email[0]?.title,
-      banner,
-      content,
-      email[0]?.headerColor,
-      email[0]?.footerColor,
-      email[0]?.mainColor,
-      email[0]?.greeting,
-      email[0]?.warning,
-      resetURL,
-      domainName,
-      company.companyName
-    ).sendEmail();
-  } catch (err) {
-    return next(
-      new AppError(
-        `There was an error sending the email. Try again later!, ${err}`,
-        500
-      )
-    );
-  }
-
+  new Record(user).forgottenPassword(resetToken);
   res.status(200).json({
     status: "success",
   });

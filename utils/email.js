@@ -6,7 +6,7 @@ const Transport = require("nodemailer-sendinblue-transport");
 dotenv.config({ path: "../config.env" });
 
 module.exports = class Email {
-  constructor(company, user, email, bannerURL, content, resetURL) {
+  constructor(company, user, email, bannerURL, content, resetUrl) {
     this.companyName = company.companyName;
     this.domainName = company.domainName;
     this.logo = company.logo;
@@ -22,7 +22,7 @@ module.exports = class Email {
     this.mainColor = email.mainColor;
     this.greeting = email.greeting;
     this.warning = email.warning;
-    this.resetURL = resetURL;
+    this.resetURL = resetUrl;
   }
 
   // 1) SET CONFIGURATION
@@ -66,7 +66,7 @@ module.exports = class Email {
           greeting: this.greeting,
           warning: this.warning,
           name: this.user.username,
-          resetURL: this.resetURL,
+          resetUrl: this.resetURL,
           from: this.from,
           title: this.title,
           domainName: this.domainName,
@@ -82,7 +82,7 @@ module.exports = class Email {
   }
 
   sendEmail() {
-    console.log(`Email sending...`);
+    console.log(`Email sending...${this.resetURL}`);
     this.send(`${this.template}`, `${this.title}`);
   }
 };
