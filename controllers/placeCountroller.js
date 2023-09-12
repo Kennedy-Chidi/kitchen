@@ -16,7 +16,7 @@ const FetchQuery = require("../utils/fetchAPIQuery");
 exports.getStates = catchAsync(async (req, res, next) => {
   //////////////GET ALL HOME BANNERS/////////////
   let banners = await new FetchQuery(
-    { limit: 10, page: 1, sort: "-time", bannerPage: "Home" },
+    { limit: 10, page: 1, sort: "-time" },
     Banner
   ).fetchData();
 
