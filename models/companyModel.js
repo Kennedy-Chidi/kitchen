@@ -14,6 +14,7 @@ const companySchema = new mongoose.Schema({
   companyDomain: String,
   announcements: Array,
   referralPercentage: Number,
+  productCategories: Array,
 });
 
 const Company = mongoose.model("Company", companySchema);

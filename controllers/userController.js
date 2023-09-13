@@ -371,6 +371,23 @@ exports.getAllInitials = catchAsync(async (req, res, next) => {
     Promo
   ).fetchData();
 
+  //////////////GET PRODUCT CATEGGORIES//////////////
+  const products = [];
+  for (let i = 0; i < company.productCategories.length; i++) {
+    const el = company.productCategories[i];
+    let foundCategory = products.some((obj) => obj.name === el.name);
+
+    if (!foundCategory) {
+      products.push(el);
+    }
+  }
+
+  for (let i = 0; i < products.length; i++) {
+    if (products[i].image != "") {
+      products[i].imageUrl = await getAFileUrl(products[i].image);
+    }
+  }
+
   //////////////GET USER TRANSACTIONS MESSAGES//////////////
   const transactions = await new FetchQuery(
     { limit: 10, page: 1, status: true, username: username, sort: "-time" },
@@ -383,5 +400,6 @@ exports.getAllInitials = catchAsync(async (req, res, next) => {
     transactions,
     promos,
     company,
+    categories: products,
   });
 });

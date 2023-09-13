@@ -115,13 +115,14 @@ exports.createProduct = catchAsync(async (req, res, next) => {
     }
   }
 
-  await Product.create(data);
-  await setProductProperties(data);
+  const product = await Product.create(data);
+  await setProductProperties(product);
   next();
 });
 
 exports.updateProduct = catchAsync(async (req, res, next) => {
   const filesToDelete = [];
+  const image = req.body.productImage;
   let data = req.body;
   let files = req.files;
 
@@ -186,11 +187,11 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
     data.productCategories = [data.productCategories];
   }
 
-  await Product.findByIdAndUpdate(req.params.id, data);
+  const newProduct = await Product.findByIdAndUpdate(req.params.id, data);
+  data.productImage = newProduct.productImage;
+  await setProductProperties(data);
 
-  const form = await setProductProperties(data);
-
-  await Company.findOneAndUpdate(form);
+  // await Company.findOneAndUpdate(form);
 
   req.files = filesToDelete;
 
@@ -221,6 +222,31 @@ exports.getAProduct = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     data: product,
+  });
+});
+
+exports.getProductCategories = catchAsync(async (req, res, next) => {
+  const company = await Company.findOne({ state: req.query.state });
+
+  const products = [];
+  for (let i = 0; i < company.productCategories.length; i++) {
+    const el = company.productCategories[i];
+    let foundCategory = products.some((obj) => obj.name === el.name);
+
+    if (!foundCategory) {
+      products.push(el);
+    }
+  }
+
+  for (let i = 0; i < products.length; i++) {
+    if (products[i].image != "") {
+      products[i].imageUrl = await getAFileUrl(products[i].image);
+    }
+  }
+
+  res.status(200).json({
+    status: "success",
+    data: products,
   });
 });
 
@@ -341,6 +367,29 @@ exports.deletePromos = catchAsync(async (req, res, next) => {
 });
 
 const setProductProperties = async (product) => {
+  const company = await Company.findOne({ state: product.productState });
+  const oldCategories = company.productCategories;
+  const newCategories = product.productCategories;
+
+  for (let i = 0; i < newCategories.length; i++) {
+    const el = newCategories[i];
+
+    let foundCategory = oldCategories.some((obj) => obj.category === el);
+
+    if (!foundCategory) {
+      const form = {
+        image: product.productImage,
+        category: el,
+        name: product.productName,
+      };
+      oldCategories.push(form);
+    }
+  }
+
+  await Company.findByIdAndUpdate(company._id, {
+    productCategories: oldCategories,
+  });
+
   const stats = await Stats.findOne();
   if (stats) {
     let maxPrice = stats.productMaxPrice;
