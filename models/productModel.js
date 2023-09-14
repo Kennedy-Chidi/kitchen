@@ -25,6 +25,8 @@ const productSchema = new mongoose.Schema({
   ratingAverage: Number,
   reviewId: String,
   isPromo: Boolean,
+  productDiscount: Number,
+  productNewPrice: Number,
   promoType: {
     type: String,
     enum: ["Price", "Target", "Discount"],

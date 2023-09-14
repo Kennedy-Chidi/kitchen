@@ -8,6 +8,25 @@ const Validator = require("../utils/validateData");
 const FetchQuery = require("../utils/fetchAPIQuery");
 const { ObjectId } = require("mongodb");
 
+const setPromo = async (product) => {
+  product.productDiscount = product.productDiscount * 1;
+  product.productNewPrice = product.productNewPrice * 1;
+  if (product.productNewPrice != "" && product.productNewPrice != 0) {
+    product.productDiscount =
+      ((product.productSellingPrice - product.productNewPrice) /
+        product.productSellingPrice) *
+      100;
+    product.isPromo = true;
+  } else if (product.productDiscount != "" && product.productDiscount != 0) {
+    product.productNewPrice =
+      product.productSellingPrice -
+      (product.productDiscount * product.productSellingPrice) / 100;
+    product.isPromo = true;
+  }
+
+  return product;
+};
+
 exports.getProducts = catchAsync(async (req, res, next) => {
   const products = await new FetchQuery(req.query, Product).fetchData();
 
@@ -44,6 +63,8 @@ exports.createProduct = catchAsync(async (req, res, next) => {
   let data = req.body;
   data.productStatePrice = JSON.parse(req.body.productStatePrice);
   let files = req.files;
+
+  data = await setPromo(data);
 
   const existing = await Product.findOne({ productName: data.productName });
 
@@ -125,6 +146,8 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
   const image = req.body.productImage;
   let data = req.body;
   let files = req.files;
+
+  data = await setPromo(data);
 
   data = await Validator.trimData(data);
 
