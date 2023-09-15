@@ -325,27 +325,45 @@ exports.deleteProducts = catchAsync(async (req, res, next) => {
 exports.fetchItems = (io, socket) => {
   socket.on("fetchItems", async (item) => {
     const limit = item.limit;
-    const products = await Product.find({
-      productName: { $regex: item.keyWord, $options: "i" },
-    }).limit(limit);
+    const query = {
+      $or: [
+        { productName: { $regex: item.keyWord, $options: "i" } },
+        { productCategories: { $regex: item.keyWord, $options: "i" } },
+      ],
+      sort: "productName",
+      limit: limit,
+    };
 
-    for (let i = 0; i < products.length; i++) {
-      if (products[i].productImage != "") {
-        products[i].productImageUrl = await getAFileUrl(
-          products[i].productImage
+    const products = await new FetchQuery(query, Product).fetchData();
+
+    for (let i = 0; i < products.results.length; i++) {
+      if (products.results[i].productImage != "") {
+        products.results[i].productImageUrl = await getAFileUrl(
+          products.results[i].productImage
         );
       }
 
-      if (products[i].productImages.length > 0) {
-        for (let x = 0; x < products[i].productImages.length; x++) {
-          products[i].productImagesUrl[x] = await getAFileUrl(
-            products[i].productImage[x]
+      if (products.results[i].promoBanner) {
+        products.results[i].promoBannerUrl = await getAFileUrl(
+          products.results[i].promoBanner
+        );
+      }
+
+      if (products.results[i].productImages.length > 0) {
+        for (let x = 0; x < products.results[i].productImages.length; x++) {
+          products.results[i].productImagesUrl[x] = await getAFileUrl(
+            products.results[i].productImages[x]
           );
         }
       }
     }
 
-    io.emit("fetchedItems", products);
+    const data = {
+      username: item.username,
+      products: products,
+    };
+
+    io.emit("fetchedItems", data);
   });
 };
 
