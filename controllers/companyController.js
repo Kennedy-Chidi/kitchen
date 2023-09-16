@@ -2,6 +2,7 @@ const Company = require("../models/companyModel");
 const Country = require("../models/countryModel");
 const Notice = require("../models/noticeModel");
 const Notification = require("../models/notificationModel");
+const FAQ = require("../models/faqModel");
 const Officials = require("../models/officialModel");
 const Banners = require("../models/bannerModel");
 const Partners = require("../models/partnerModel");
@@ -173,6 +174,9 @@ exports.getSettings = catchAsync(async (req, res, next) => {
   let banners;
   let blogs;
   let reviews;
+
+  //////////////GET ALL COUNTRIES /////////////////
+  const faq = await new FetchQuery({ limit: 300, page: 1 }, FAQ).fetchData();
 
   //////////////GET ALL COUNTRIES /////////////////
   const countries = await new FetchQuery(
@@ -359,6 +363,7 @@ exports.getSettings = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
+    faq,
     countries,
     notifications,
     promotions,

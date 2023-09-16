@@ -1,5 +1,6 @@
 const FAQ = require("../models/faqModel");
 const AppError = require("../utils/appError");
+const FetchQuery = require("../utils/fetchAPIQuery");
 const APIFeatures = require("../utils/apiFeatures");
 const catchAsync = require("../utils/catchAsync");
 const Validator = require("../utils/validateData");
@@ -29,25 +30,19 @@ exports.createFAQ = catchAsync(async (req, res, next) => {
     }
   });
 
+  console.log(req.body);
+
   await FAQ.create(req.body);
 
   next();
 });
 
 exports.getFAQ = catchAsync(async (req, res, next) => {
-  const result = new APIFeatures(FAQ.find(), req.query)
-    .filter()
-    .sort()
-    .limitFields();
-
-  const length = await result.query;
-  const features = result.paginate();
-  const faq = await features.query.clone();
+  let faq = await new FetchQuery(req.query, FAQ).fetchData();
 
   res.status(200).json({
     status: "success",
     data: faq,
-    resultLength: length.length,
   });
 });
 
@@ -63,6 +58,5 @@ exports.updateFAQ = catchAsync(async (req, res, next) => {
 
 exports.deleteFAQ = catchAsync(async (req, res, next) => {
   await FAQ.findByIdAndDelete(req.params.id);
-
   next();
 });

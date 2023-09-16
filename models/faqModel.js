@@ -4,6 +4,7 @@ const faqSchema = new mongoose.Schema({
   category: String,
   question: String,
   answer: String,
+  time: Number,
   dateCreated: {
     type: Number,
     default: new Date().getTime(),
